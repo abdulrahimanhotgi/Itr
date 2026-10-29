@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Customer Churn Predictor</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#f5f7fa;--card:#fff;--ink:#14213d;--mut:#5c677d;--line:#d9dee7;--acc:#1b6ca8;--bad:#c0392b;--mid:#c47f00;--ok:#2a8c5a}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1624;--card:#18223a;--ink:#e8edf7;--mut:#9aa7c0;--line:#2b3856;--acc:#5aa9e6;--bad:#ef6f61;--mid:#f0b13a;--ok:#4cc38a}}
+:root[data-theme="dark"]{--bg:#0f1624;--card:#18223a;--ink:#e8edf7;--mut:#9aa7c0;--line:#2b3856;--acc:#5aa9e6;--bad:#ef6f61;--mid:#f0b13a;--ok:#4cc38a}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}*{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Segoe UI",system-ui,-apple-system,Roboto,sans-serif}
+main{max-width:660px;margin:0 auto;padding:16px}
+h1{font-size:1.35rem;margin:4px 0 2px}h2{font-size:1.05rem;margin:0 0 10px}
+.sub,.note{color:var(--mut);font-size:.85rem;margin:0 0 12px}
+nav{display:flex;gap:6px;margin-bottom:14px}
+nav button{flex:1;padding:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;font-size:.95rem;cursor:pointer}
+nav button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:14px}
+label{display:block;font-size:.82rem;color:var(--mut);margin:10px 0 4px}
+select,input[type=number],textarea{width:100%;padding:9px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font-size:1rem}
+input[type=range]{width:100%}select:disabled{opacity:.55}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+.val{color:var(--ink);font-weight:600}
+.gauge{height:14px;border-radius:7px;background:var(--line);overflow:hidden;margin:8px 0}
+.gauge i{display:block;height:100%;width:0;transition:width .35s,background .35s}
+.big{font-size:2.4rem;font-weight:700;line-height:1}
+.pill{display:inline-block;padding:3px 10px;border-radius:99px;font-size:.8rem;font-weight:600;color:#fff;margin-left:8px;vertical-align:middle}
+ul{margin:6px 0 0;padding-left:18px}li{margin:4px 0}
+.bar{display:grid;grid-template-columns:128px 1fr 46px;gap:8px;align-items:center;margin:6px 0;font-size:.82rem}
+.bar div{height:14px;background:var(--line);border-radius:7px;overflow:hidden}.bar i{display:block;height:100%;background:var(--acc)}
+.bar.hot i{background:var(--bad)}
+.kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.kpi div{text-align:center;padding:8px 2px;border:1px solid var(--line);border-radius:10px}
+.kpi b{display:block;font-size:1.2rem}.kpi span{font-size:.74rem;color:var(--mut)}
+table{width:100%;border-collapse:collapse;font-size:.85rem}td,th{padding:6px 4px;border-bottom:1px solid var(--line);text-align:right}th:first-child,td:first-child{text-align:left}
+.btn{margin-top:8px;padding:10px 16px;border:0;border-radius:8px;background:var(--acc);color:#fff;font-size:1rem;cursor:pointer}
+.hide{display:none}.err{color:var(--bad);font-size:.85rem}
+main{padding-bottom:76px}
+.mini{position:fixed;left:0;right:0;bottom:0;display:flex;gap:10px;align-items:center;justify-content:center;background:var(--card);border-top:1px solid var(--line);padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px));z-index:5}
+.mini b{font-size:1.4rem}.mini .pill{margin:0}
+.pre{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:2px}
+.pre button{flex:1;min-width:104px;padding:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:8px;cursor:pointer;font-size:.85rem}
+details.card summary{cursor:pointer;font-weight:600}details.card p{margin:8px 0 0;font-size:.88rem;color:var(--mut)}
+button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+@media(max-width:380px){.row{grid-template-columns:1fr}.bar{grid-template-columns:100px 1fr 44px}}
+@media(min-width:900px){main{max-width:1040px;padding-bottom:16px}#p1:not(.hide){display:grid;grid-template-columns:1.15fr 1fr;gap:14px;align-items:start}.res{position:sticky;top:12px}.mini{display:none!important}.kpi b{font-size:1.5rem}}
+</style></head><body><main>
+<h1>Customer Churn Predictor</h1>
+<p class="sub" id="sub"></p>
+<details class="card"><summary>How to use</summary>
+<p><b>Predict:</b> choose a customer's details (or tap an example). The risk score updates instantly.<br><b>Insights:</b> churn rates from the real dataset and model accuracy.<br><b>Batch:</b> tap “Load demo data”, or upload a CSV with the Telco columns, to score many customers at once.</p></details>
+<nav><button id="t1" class="on">Predict</button><button id="t2">Insights</button><button id="t3">Batch</button></nav>
+
+<section id="p1">
+<div class="card"><div class="pre"><button id="pHigh">High-risk example</button><button id="pLow">Low-risk example</button><button id="pReset">Reset</button></div><div class="row" id="form"></div></div>
+<div class="card res" aria-live="polite">
+<div><span class="big" id="pct">0%</span><span class="pill" id="lvl">Low</span></div>
+<div class="gauge"><i id="g"></i></div>
+<h2>What drives this score</h2><ul id="drv"></ul>
+<h2 style="margin-top:14px">Suggested action</h2><ul id="act"></ul>
+<p class="note" style="margin-top:12px">Real logistic regression trained on the Telco dataset (class-balanced, so scores run higher than raw churn frequency). Use the level as a ranking aid.</p>
+</div></section>
+
+<section id="p2" class="hide">
+<div class="card"><div class="kpi"><div><b id="k1"></b><span>Overall churn</span></div><div><b id="k2"></b><span>Customers lost</span></div><div><b id="k3"></b><span>Monthly revenue lost</span></div></div></div>
+<div id="eda"></div>
+<div class="card"><h2>Model performance (20% test set)</h2><table id="mt"></table><p class="note" style="margin-top:8px">CV AUC is 5-fold cross-validated on all data.</p></div>
+</section>
+
+<section id="p3" class="hide">
+<div class="card"><h2>Score many customers</h2>
+<p class="sub">Upload or paste a CSV with the original Telco columns (customerID optional). Contract, tenure and MonthlyCharges are required.</p>
+<input type="file" id="file" accept=".csv,text/csv">
+<label>Or paste CSV text</label><textarea id="csv" rows="5" placeholder="Paste header + rows"></textarea>
+<button class="btn" id="run">Score customers</button> <button class="btn" id="demo" style="background:var(--mut)">Load demo data (60)</button>
+<div id="out" style="margin-top:10px;overflow-x:auto"></div></div></section>
+<div class="mini" id="mini" aria-live="polite"><span>Churn risk</span><b id="mpct">0%</b><span class="pill" id="mlvl">Low</span></div></main>
+<script>
+var M={"intercept":-0.46027173434602825,"features":[{"type":"num","name":"tenure","mean":32.421786120591584,"scale":24.543514392682013,"coef":-1.3396633243907383},{"type":"num","name":"MonthlyCharges","mean":64.79820819112628,"scale":30.083834589143024,"coef":-0.31923925110167184},{"type":"num","name":"TotalCharges","mean":2283.300440841866,"scale":2266.610180714535,"coef":0.647115855732934},{"type":"cat","name":"gender","levels":[{"level":"Female","coef":0.0,"freq":0.49531},{"level":"Male","coef":-0.01500471196153684,"freq":0.50469}]},{"type":"cat","name":"SeniorCitizen","levels":[{"level":"No","coef":0.0,"freq":0.8376},{"level":"Yes","coef":0.22316197534775187,"freq":0.1624}]},{"type":"cat","name":"Partner","levels":[{"level":"No","coef":0.0,"freq":0.51749},{"level":"Yes","coef":-0.006698530007705611,"freq":0.48251}]},{"type":"cat","name":"Dependents","levels":[{"level":"No","coef":0.0,"freq":0.70151},{"level":"Yes","coef":-0.15330295642403688,"freq":0.29849}]},{"type":"cat","name":"PhoneService","levels":[{"level":"No","coef":0.0,"freq":0.0967},{"level":"Yes","coef":-0.36489071493288117,"freq":0.9033}]},{"type":"cat","name":"MultipleLines","levels":[{"level":"No","coef":0.0,"freq":0.48137},{"level":"No phone service","coef":-0.0020630363407066876,"freq":0.0967},{"level":"Yes","coef":0.26708791641050206,"freq":0.42193}]},{"type":"cat","name":"InternetService","levels":[{"level":"DSL","coef":0.0,"freq":0.34357},{"level":"Fiber optic","coef":0.9773857964117043,"freq":0.44027},{"level":"No","coef":-0.15213775876527533,"freq":0.21615}]},{"type":"cat","name":"OnlineSecurity","levels":[{"level":"No","coef":0.0,"freq":0.4973},{"level":"No internet service","coef":-0.15213775876527533,"freq":0.21615},{"level":"Yes","coef":-0.34156861700988644,"freq":0.28655}]},{"type":"cat","name":"OnlineBackup","levels":[{"level":"No","coef":0.0,"freq":0.43899},{"level":"No internet service","coef":-0.15213775876527533,"freq":0.21615},{"level":"Yes","coef":-0.1030426295538536,"freq":0.34485}]},{"type":"cat","name":"DeviceProtection","levels":[{"level":"No","coef":0.0,"freq":0.43999},{"level":"No internet service","coef":-0.15213775876527533,"freq":0.21615},{"level":"Yes","coef":-0.019402007602647365,"freq":0.34386}]},{"type":"cat","name":"TechSupport","levels":[{"level":"No","coef":0.0,"freq":0.49374},{"level":"No internet service","coef":-0.15213775876527533,"freq":0.21615},{"level":"Yes","coef":-0.30116867753231596,"freq":0.2901}]},{"type":"cat","name":"StreamingTV","levels":[{"level":"No","coef":0.0,"freq":0.39946},{"level":"No internet service","coef":-0.15213775876527533,"freq":0.21615},{"level":"Yes","coef":0.3084055870298301,"freq":0.38439}]},{"type":"cat","name":"StreamingMovies","levels":[{"level":"No","coef":0.0,"freq":0.39548},{"level":"No internet service","coef":-0.15213775876527533,"freq":0.21615},{"level":"Yes","coef":0.31833941454960296,"freq":0.38837}]},{"type":"cat","name":"Contract","levels":[{"level":"Month-to-month","coef":0.0,"freq":0.55105},{"level":"One year","coef":-0.6811344493779794,"freq":0.20933},{"level":"Two year","coef":-1.3983687604800652,"freq":0.23962}]},{"type":"cat","name":"PaperlessBilling","levels":[{"level":"No","coef":0.0,"freq":0.40728},{"level":"Yes","coef":0.3164526123516147,"freq":0.59272}]},{"type":"cat","name":"PaymentMethod","levels":[{"level":"Bank transfer (automatic)","coef":0.0,"freq":0.21928},{"level":"Credit card (automatic)","coef":-0.06090211400472104,"freq":0.2163},{"level":"Electronic check","coef":0.3264856657717201,"freq":0.33632},{"level":"Mailed check","coef":-0.06176610490696988,"freq":0.2281}]}],"metrics":{"Logistic Regression":{"accuracy":72.57,"precision":49.01,"recall":79.41,"f1":60.61,"auc":0.835,"cv_auc":0.845,"confusion":[[724,309],[77,297]]},"Random Forest":{"accuracy":77.04,"precision":55.46,"recall":69.25,"f1":61.59,"auc":0.833,"cv_auc":0.842,"confusion":[[825,208],[115,259]]}},"churn_rate":26.58,"rows":7032,"eda":{"Contract":[["Month-to-month",42.7,3875],["One year",11.3,1472],["Two year",2.8,1685]],"InternetService":[["Fiber optic",41.9,3096],["DSL",19.0,2416],["No",7.4,1520]],"PaymentMethod":[["Electronic check",45.3,2365],["Mailed check",19.2,1604],["Bank transfer (automatic)",16.7,1542],["Credit card (automatic)",15.3,1521]],"Tenure":[["0-12 mo",47.7,2175],["13-24 mo",28.7,1024],["25-48 mo",20.4,1594],["49-60 mo",14.4,832],["61-72 mo",6.6,1407]],"TechSupport":[["No",41.6,3472],["Yes",15.2,2040],["No internet service",7.4,1520]],"OnlineSecurity":[["No",41.8,3497],["Yes",14.6,2015],["No internet service",7.4,1520]],"SeniorCitizen":[["Yes",41.7,1142],["No",23.7,5890]],"PaperlessBilling":[["Yes",33.6,4168],["No",16.4,2864]]},"lost_revenue":139131.0,"churned":1869};
+function $(i){return document.getElementById(i);}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+function css(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+var F=M.features,byName={};F.forEach(function(f){byName[f.name]=f;});
+var ADDONS=["OnlineSecurity","OnlineBackup","DeviceProtection","TechSupport","StreamingTV","StreamingMovies"];
+var LABEL={tenure:"Tenure (months)",MonthlyCharges:"Monthly charges",TotalCharges:"Total charges",SeniorCitizen:"Senior citizen",PaperlessBilling:"Paperless billing",PaymentMethod:"Payment method",InternetService:"Internet service",PhoneService:"Phone service",MultipleLines:"Multiple lines"};
+var DEF={tenure:12,MonthlyCharges:70,Contract:"Month-to-month",InternetService:"Fiber optic",PaymentMethod:"Electronic check",PaperlessBilling:"Yes",TechSupport:"No",OnlineSecurity:"No",gender:"Female",SeniorCitizen:"No",Partner:"No",Dependents:"No",PhoneService:"Yes",MultipleLines:"No",OnlineBackup:"No",DeviceProtection:"No",StreamingTV:"No",StreamingMovies:"No"};
+var ORDER=["Contract","tenure","MonthlyCharges","InternetService","PaymentMethod","PaperlessBilling","TechSupport","OnlineSecurity","OnlineBackup","DeviceProtection","StreamingTV","StreamingMovies","PhoneService","MultipleLines","SeniorCitizen","Partner","Dependents","gender"];
+(function build(){
+ var h="";
+ ORDER.forEach(function(n){var f=byName[n],lab=LABEL[n]||n;
+  if(f.type==="num"){var mx=n==="tenure"?72:120,mn=n==="tenure"?0:18;
+   h+='<div style="grid-column:1/-1"><label for="f_'+n+'">'+lab+': <span class="val" id="v_'+n+'"></span></label><input type="range" id="f_'+n+'" min="'+mn+'" max="'+mx+'" step="'+(n==="tenure"?1:0.5)+'" value="'+DEF[n]+'"></div>';}
+  else{h+='<div><label for="f_'+n+'">'+lab+'</label><select id="f_'+n+'">'+f.levels.map(function(l){return'<option'+(l.level===DEF[n]?" selected":"")+'>'+esc(l.level)+'</option>';}).join("")+'</select></div>';}});
+ $("form").innerHTML=h;
+})();
+function read(){var r={};ORDER.forEach(function(n){var e=$("f_"+n);r[n]=byName[n].type==="num"?parseFloat(e.value):e.value;});r.TotalCharges=r.tenure*r.MonthlyCharges;return r;}
+function score(r){
+ var z=M.intercept,d=[];
+ F.forEach(function(f){var c=0,exp=0,t;
+  if(f.type==="num"){var v=r[f.name];if(!isFinite(v))throw new Error("Bad number in "+f.name);c=(v-f.mean)/f.scale*f.coef;t=f.name==="TotalCharges"?"Total charges":f.name==="tenure"?"Tenure "+Math.round(v)+" months":"Monthly charges "+v.toFixed(0);}
+  else{var hit=null;f.levels.forEach(function(l){exp+=l.freq*l.coef;if(l.level===r[f.name])hit=l;});if(!hit)throw new Error("Unknown value '"+r[f.name]+"' for "+f.name);c=hit.coef;t=(LABEL[f.name]||f.name)+": "+hit.level;}
+  z+=c;d.push([c-exp,t,f.name]);});
+ return{p:1/(1+Math.exp(-z)),d:d};
+}
+function level(p){return p>=0.65?["High",css("--bad")]:p>=0.35?["Medium",css("--mid")]:["Low",css("--ok")];}
+function sync(){
+ var net=$("f_InternetService").value==="No";
+ ADDONS.forEach(function(a){var e=$("f_"+a);if(net){e.value="No internet service";e.disabled=true;}else{if(e.value==="No internet service")e.value="No";e.disabled=false;}});
+ var ph=$("f_PhoneService").value==="No",ml=$("f_MultipleLines");
+ if(ph){ml.value="No phone service";ml.disabled=true;}else{if(ml.value==="No phone service")ml.value="No";ml.disabled=false;}
+}
+function update0(){
+ sync();var r=read();$("v_tenure").textContent=r.tenure;$("v_MonthlyCharges").textContent=r.MonthlyCharges.toFixed(2);
+ var s=score(r),L=level(s.p);
+ $("pct").textContent=Math.round(s.p*100)+"%";$("lvl").textContent=L[0];$("lvl").style.background=L[1];
+ $("g").style.width=Math.round(s.p*100)+"%";$("g").style.background=L[1];$("mpct").textContent=$("pct").textContent;$("mlvl").textContent=L[0];$("mlvl").style.background=L[1];
+ var d=s.d.filter(function(x){return Math.abs(x[0])>0.12;});
+ var up=d.filter(function(x){return x[0]>0}).sort(function(a,b){return b[0]-a[0]}).slice(0,4);
+ var dn=d.filter(function(x){return x[0]<0}).sort(function(a,b){return a[0]-b[0]}).slice(0,3);
+ $("drv").innerHTML=up.map(function(x){return"<li>↑ raises risk: "+esc(x[1])+"</li>";}).concat(dn.map(function(x){return"<li>↓ lowers risk: "+esc(x[1])+"</li>";})).join("")||"<li>No strong drivers</li>";
+ var a=[],noNet=r.InternetService==="No";
+ if(r.Contract==="Month-to-month")a.push("Offer a discount or loyalty points to move to a one- or two-year contract.");
+ if(r.tenure<=12)a.push("Run onboarding check-ins at 30, 90 and 180 days.");
+ if(r.PaymentMethod==="Electronic check")a.push("Offer a small cashback for automatic payment.");
+ if(!noNet&&(r.TechSupport==="No"||r.OnlineSecurity==="No"))a.push("Bundle tech support and online security free for 3 months.");
+ if(r.InternetService==="Fiber optic"&&r.MonthlyCharges>85)a.push("Review fiber plan price and send bill alerts.");
+ if(r.SeniorCitizen==="Yes")a.push("Provide assisted setup and helpline support.");
+ if(!a.length)a.push("Low risk: keep service quality steady and reward loyalty.");
+ $("act").innerHTML=a.map(function(x){return"<li>"+x+"</li>";}).join("");
+}
+function update(){try{update0();}catch(e){$("drv").innerHTML='<li class="err">'+esc(e.message)+"</li>";}}
+var PH=Object.assign({},DEF,{tenure:2,MonthlyCharges:85}),PL=Object.assign({},DEF,{tenure:60,MonthlyCharges:55,Contract:"Two year",InternetService:"DSL",PaymentMethod:"Credit card (automatic)",PaperlessBilling:"No",Partner:"Yes",Dependents:"Yes",TechSupport:"Yes",OnlineSecurity:"Yes",OnlineBackup:"Yes",DeviceProtection:"Yes",StreamingTV:"Yes",StreamingMovies:"Yes"});
+function setForm(o){ORDER.forEach(function(n){$("f_"+n).value=o[n];});update();}
+$("pHigh").addEventListener("click",function(){setForm(PH);});$("pLow").addEventListener("click",function(){setForm(PL);});$("pReset").addEventListener("click",function(){setForm(DEF);});
+ORDER.forEach(function(n){var e=$("f_"+n);e.addEventListener("input",update);e.addEventListener("change",update);});
+// Insights
+$("sub").textContent="Trained on "+M.rows.toLocaleString()+" Telco customers ("+M.churn_rate+"% churned). Enter a profile to get a real churn-risk score.";
+$("k1").textContent=M.churn_rate+"%";$("k2").textContent=M.churned.toLocaleString();$("k3").textContent=Math.round(M.lost_revenue).toLocaleString();
+(function(){var T={Contract:"Churn rate by contract",InternetService:"Churn rate by internet service",PaymentMethod:"Churn rate by payment method",Tenure:"Churn rate by tenure",TechSupport:"Churn rate by tech support",OnlineSecurity:"Churn rate by online security",SeniorCitizen:"Churn rate: senior citizen",PaperlessBilling:"Churn rate: paperless billing"},h="";
+ Object.keys(T).forEach(function(k){h+='<div class="card"><h2>'+T[k]+'</h2>'+M.eda[k].map(function(r){return'<div class="bar'+(r[1]>M.churn_rate?" hot":"")+'"><span>'+esc(r[0])+'</span><div><i style="width:'+Math.min(100,r[1]*1.8)+'%"></i></div><b>'+r[1]+'%</b></div>';}).join("")+'</div>';});
+ $("eda").innerHTML=h;
+ var mt='<tr><th>Model</th><th>Acc</th><th>Prec</th><th>Recall</th><th>AUC</th><th>CV AUC</th></tr>';
+ Object.keys(M.metrics).forEach(function(n){var m=M.metrics[n];mt+="<tr><td>"+n+"</td><td>"+m.accuracy+"</td><td>"+m.precision+"</td><td>"+m.recall+"</td><td>"+m.auc+"</td><td>"+m.cv_auc+"</td></tr>";});
+ $("mt").innerHTML=mt;})();
+function tab(n){for(var i=1;i<=3;i++){$("p"+i).classList.toggle("hide",i!==n);$("t"+i).classList.toggle("on",i===n);}$("mini").style.display=n===1?"":"none";}
+[1,2,3].forEach(function(n){$("t"+n).addEventListener("click",function(){tab(n);});});
+// Batch
+function parseCSV(t){var rows=[],row=[],f="",q=false;t=t.replace(/^\uFEFF/,"");
+ for(var i=0;i<t.length;i++){var c=t[i];
+  if(q){if(c==='"'){if(t[i+1]==='"'){f+='"';i++;}else q=false;}else f+=c;}
+  else if(c==='"')q=true;else if(c===","){row.push(f);f="";}
+  else if(c==="\n"||c==="\r"){if(c==="\r"&&t[i+1]==="\n")i++;row.push(f);f="";if(row.length>1||row[0]!=="")rows.push(row);row=[];}
+  else f+=c;}
+ if(f!==""||row.length){row.push(f);rows.push(row);}return rows;}
+function runBatch(text){
+ var out=$("out");
+ try{var rows=parseCSV(text);if(rows.length<2){out.innerHTML='<p class="err">Add a header row and at least one data row.</p>';return;}
+  var h=rows[0].map(function(s){return s.trim();}),idx={};h.forEach(function(k,i){idx[k]=i;});
+  var need=["tenure","MonthlyCharges","Contract"].filter(function(k){return!(k in idx);});
+  if(need.length){out.innerHTML='<p class="err">Missing required column(s): '+esc(need.join(", "))+'</p>';return;}
+  var res=[],bad=0;
+  rows.slice(1).forEach(function(v,i){
+   try{var r={};
+    F.forEach(function(f){var raw=f.name in idx?(v[idx[f.name]]||"").trim():"";
+     if(f.type==="num"){var x=parseFloat(raw);if(f.name==="TotalCharges"&&!isFinite(x))x=parseFloat(r.tenure)*parseFloat(r.MonthlyCharges);r[f.name]=x;}
+     else{if(f.name==="SeniorCitizen"){raw=raw==="1"?"Yes":raw==="0"?"No":raw;}
+      if(!raw){raw=DEF[f.name];if(ADDONS.indexOf(f.name)>=0&&r.InternetService==="No")raw="No internet service";if(f.name==="MultipleLines"&&r.PhoneService==="No")raw="No phone service";}
+      r[f.name]=raw;}});
+    var s=score(r);res.push([("customerID" in idx?v[idx.customerID]:"#"+(i+1)),r.Contract,r.tenure,s.p]);}catch(e){bad++;}});
+  res.sort(function(a,b){return b[3]-a[3];});
+  var hi=res.filter(function(x){return x[3]>=0.65;}).length;
+  var tb=res.slice(0,50).map(function(x){var L=level(x[3]);return"<tr><td>"+esc(x[0])+"</td><td>"+esc(x[1])+"</td><td>"+x[2]+'</td><td style="color:'+L[1]+';font-weight:700">'+Math.round(x[3]*100)+"% "+L[0]+"</td></tr>";}).join("");
+  out.innerHTML=(res.length?"<p><b>"+res.length+"</b> scored, <b>"+hi+"</b> high risk. Showing the top "+Math.min(50,res.length)+".</p><table><tr><th>Customer</th><th>Contract</th><th>Tenure</th><th>Risk</th></tr>"+tb+"</table>":'<p class="err">No valid rows found.</p>')+(bad?'<p class="note">'+bad+" row(s) skipped (unknown category or bad number).</p>":"");
+ }catch(e){out.innerHTML='<p class="err">Could not read the CSV: '+esc(e.message)+"</p>";}
+}
+var DEMO="customerID,gender,SeniorCitizen,Partner,Dependents,tenure,PhoneService,MultipleLines,InternetService,OnlineSecurity,OnlineBackup,DeviceProtection,TechSupport,StreamingTV,StreamingMovies,Contract,PaperlessBilling,PaymentMethod,MonthlyCharges,TotalCharges\n9259-PACGQ,Female,0,Yes,No,34,Yes,Yes,DSL,Yes,Yes,No,Yes,No,No,Month-to-month,No,Electronic check,62.65,2274.9\n5914-DVBWJ,Female,1,No,No,18,Yes,Yes,Fiber optic,No,Yes,No,Yes,No,No,Month-to-month,Yes,Electronic check,85.45,1505.85\n9734-YWGEX,Female,0,No,No,9,Yes,Yes,Fiber optic,No,No,Yes,No,Yes,Yes,Month-to-month,No,Credit card (automatic),98.3,923.5\n5035-PGZXH,Female,0,No,No,56,Yes,Yes,Fiber optic,No,Yes,Yes,No,Yes,Yes,One year,Yes,Electronic check,106.8,5914.4\n6362-QHAFM,Male,0,Yes,No,42,Yes,Yes,Fiber optic,No,No,Yes,Yes,Yes,Yes,One year,Yes,Electronic check,108.3,4586.15\n6207-WIOLX,Female,0,Yes,Yes,25,No,No phone service,DSL,Yes,Yes,Yes,No,Yes,Yes,Month-to-month,Yes,Credit card (automatic),58.6,1502.65\n9369-XFEHK,Female,1,Yes,No,33,Yes,Yes,Fiber optic,No,Yes,No,No,No,No,Month-to-month,Yes,Bank transfer (automatic),80.6,2656.5\n3420-YJLQT,Female,0,No,No,2,Yes,Yes,Fiber optic,No,Yes,No,No,No,No,Month-to-month,No,Electronic check,79.55,151.75\n4801-KFYKL,Male,0,No,Yes,8,Yes,No,No,No internet service,No internet service,No internet service,No internet service,No internet service,No internet service,Month-to-month,No,Bank transfer (automatic),19.45,159.2\n6212-ATMLK,Female,0,No,No,50,Yes,Yes,Fiber optic,No,No,No,No,Yes,Yes,Month-to-month,Yes,Electronic check,95.7,4729.75\n5442-PPTJY,Male,0,Yes,Yes,12,Yes,No,No,No internet service,No internet service,No internet service,No internet service,No internet service,No internet service,Two year,No,Mailed check,19.7,258.35\n2215-ZAFGX,Male,0,No,No,9,Yes,Yes,Fiber optic,No,No,No,No,Yes,No,Month-to-month,Yes,Electronic check,85.5,791.7\n5392-AKEMH,Female,0,No,No,12,Yes,No,DSL,No,No,No,No,No,No,Month-to-month,Yes,Electronic check,45.05,523.1\n9040-KZVWO,Male,0,No,No,26,Yes,No,Fiber optic,No,Yes,No,No,No,No,One year,No,Bank transfer (automatic),75.5,2018.1\n2070-XYMFH,Female,1,No,No,23,Yes,Yes,Fiber optic,No,No,Yes,No,No,No,Month-to-month,Yes,Mailed check,79.35,1835.3\n9576-ANLXO,Female,0,No,No,3,Yes,No,Fiber optic,No,No,No,No,No,No,Month-to-month,Yes,Bank transfer (automatic),69.55,222.3\n2262-SLNVK,Female,0,No,No,1,Yes,No,Fiber optic,No,No,No,No,No,No,Month-to-month,No,Electronic check,70.1,70.1\n1230-QAJDW,Male,0,No,No,3,Yes,Yes,DSL,No,No,No,Yes,Yes,No,Month-to-month,Yes,Mailed check,65.25,209.9\n7398-SKNQZ,Female,0,Yes,No,3,Yes,Yes,Fiber optic,No,No,No,No,Yes,Yes,Month-to-month,No,Electronic check,94.9,273.2\n2908-ZTPNF,Female,0,No,No,36,No,No phone service,DSL,No,Yes,No,Yes,No,No,Month-to-month,Yes,Bank transfer (automatic),34.85,1267.2\n8914-RBTSB,Male,0,Yes,No,31,Yes,Yes,Fiber optic,No,Yes,Yes,No,Yes,No,Month-to-month,No,Electronic check,93.8,3019.5\n1591-MQJTP,Male,1,Yes,No,51,Yes,Yes,Fiber optic,Yes,No,Yes,No,No,Yes,One year,Yes,Bank transfer (automatic),93.65,4839.15\n2778-OCLGR,Male,1,Yes,No,24,No,No phone service,DSL,Yes,No,No,No,No,Yes,Month-to-month,No,Bank transfer (automatic),39.1,971.3\n1422-DGUBX,Male,0,Yes,No,32,Yes,Yes,Fiber optic,No,No,No,Yes,No,No,One year,Yes,Electronic check,79.25,2619.15\n8975-SKGRX,Male,0,Yes,No,71,Yes,Yes,Fiber optic,Yes,Yes,Yes,Yes,Yes,Yes,Two year,Yes,Bank transfer (automatic),116.1,8310.55\n7932-WPTDS,Female,1,Yes,No,1,No,No phone service,DSL,No,No,No,No,No,No,Month-to-month,Yes,Electronic check,24.8,24.8\n1840-BIUOG,Male,0,No,No,20,Yes,Yes,DSL,No,Yes,No,Yes,Yes,No,One year,Yes,Electronic check,68.7,1416.2\n4661-NJEUX,Male,0,No,No,1,Yes,No,No,No internet service,No internet service,No internet service,No internet service,No internet service,No internet service,Month-to-month,Yes,Mailed check,20.05,20.05\n9058-CBREO,Female,1,No,No,1,Yes,Yes,DSL,No,No,No,No,No,No,Month-to-month,No,Mailed check,50.55,50.55\n4482-EWFMI,Female,0,No,No,2,Yes,No,Fiber optic,No,No,No,No,No,No,Month-to-month,Yes,Electronic check,69.7,135.2\n2019-HDCZY,Male,0,Yes,No,63,Yes,Yes,Fiber optic,No,No,Yes,No,Yes,Yes,Two year,No,Electronic check,102.6,6296.75\n0376-YMCJC,Male,0,No,No,23,Yes,Yes,Fiber optic,No,No,No,Yes,Yes,No,Month-to-month,Yes,Electronic check,90.6,1943.2\n6619-RPLQZ,Female,0,Yes,Yes,45,Yes,No,No,No internet service,No internet service,No internet service,No internet service,No internet service,No internet service,Two year,No,Mailed check,20.85,892.15\n7159-FVYPK,Female,0,Yes,Yes,3,Yes,Yes,DSL,No,Yes,Yes,No,Yes,No,Month-to-month,Yes,Bank transfer (automatic),69.15,235\n2126-GSEGL,Female,0,Yes,No,70,Yes,Yes,DSL,No,Yes,Yes,Yes,Yes,Yes,Two year,Yes,Bank transfer (automatic),84.8,5917.55\n5939-SXWHM,Male,0,Yes,Yes,48,Yes,Yes,No,No internet service,No internet service,No internet service,No internet service,No internet service,No internet service,Two year,No,Bank transfer (automatic),26.3,1245.05\n2001-EWBQU,Female,0,No,No,60,Yes,Yes,Fiber optic,No,Yes,Yes,No,Yes,Yes,Two year,No,Electronic check,104.7,6333.8\n2230-XTUWL,Female,0,Yes,Yes,48,Yes,No,No,No internet service,No internet service,No internet service,No internet service,No internet service,No internet service,Two year,No,Mailed check,19.55,883.35\n1448-CYWKC,Female,0,Yes,Yes,58,Yes,Yes,Fiber optic,No,Yes,Yes,No,Yes,Yes,One year,Yes,Credit card (automatic),105.2,6225.4\n4508-OEBEY,Male,0,Yes,No,31,Yes,No,DSL,Yes,Yes,Yes,Yes,No,Yes,One year,Yes,Credit card (automatic),75.5,2424.45\n8513-OLYGY,Male,0,Yes,No,72,Yes,Yes,Fiber optic,Yes,Yes,Yes,Yes,Yes,Yes,Two year,No,Credit card (automatic),115.8,8332.15\n0318-QUUOB,Male,0,Yes,No,1,Yes,No,Fiber optic,No,No,No,No,Yes,No,Month-to-month,Yes,Electronic check,80.55,80.55\n2272-WUSPA,Female,0,Yes,No,72,Yes,Yes,Fiber optic,Yes,Yes,Yes,No,Yes,Yes,Two year,Yes,Electronic check,110.75,7751.7\n7021-XSNYE,Male,0,Yes,Yes,7,No,No phone service,DSL,Yes,No,Yes,Yes,No,Yes,Two year,No,Credit card (automatic),49.65,305.55\n9624-EGDEQ,Female,0,No,No,37,Yes,No,No,No internet service,No internet service,No internet service,No internet service,No internet service,No internet service,Two year,No,Mailed check,19.8,813.3\n6754-WKSHP,Male,0,No,Yes,30,Yes,Yes,No,No internet service,No internet service,No internet service,No internet service,No internet service,No internet service,One year,No,Bank transfer (automatic),25.35,723.3\n4102-HLENU,Female,0,Yes,No,67,Yes,Yes,DSL,Yes,Yes,Yes,No,No,No,Two year,No,Mailed check,65.65,4322.85\n6996-KNSML,Female,0,No,No,1,Yes,No,Fiber optic,No,No,Yes,No,No,No,Month-to-month,Yes,Electronic check,74.9,74.9\n7666-WKRON,Female,0,No,No,39,Yes,No,Fiber optic,No,No,Yes,Yes,No,No,Two year,Yes,Electronic check,80.45,3201.55\n2676-ISHSF,Male,0,No,No,1,Yes,No,No,No internet service,No internet service,No internet service,No internet service,No internet service,No internet service,Month-to-month,No,Mailed check,20.3,20.3\n8904-OPDCK,Male,1,Yes,No,54,No,No phone service,DSL,No,No,No,No,No,No,Month-to-month,Yes,Bank transfer (automatic),24.95,1364.75\n7479-NITWS,Male,0,No,No,7,Yes,Yes,Fiber optic,No,No,Yes,No,Yes,No,Month-to-month,Yes,Credit card (automatic),89.35,631.85\n6762-QVYJO,Female,0,Yes,Yes,58,No,No phone service,DSL,Yes,No,Yes,Yes,Yes,Yes,Two year,No,Mailed check,59.75,3624.35\n2688-BHGOG,Male,1,No,No,9,Yes,No,Fiber optic,No,No,No,No,No,Yes,Month-to-month,Yes,Electronic check,79.55,718.55\n3247-ZVOUO,Male,1,Yes,No,10,Yes,Yes,Fiber optic,No,No,No,No,No,Yes,Month-to-month,No,Electronic check,85.55,851.75\n5043-TRZWM,Female,0,No,No,1,Yes,No,Fiber optic,No,No,Yes,No,No,No,Month-to-month,No,Electronic check,75.55,75.55\n4815-YOSUK,Male,0,Yes,Yes,72,Yes,Yes,Fiber optic,Yes,Yes,Yes,Yes,No,Yes,One year,Yes,Credit card (automatic),104.9,7537.5\n0742-NXBGR,Female,0,No,No,1,Yes,No,Fiber optic,No,Yes,Yes,No,No,No,Month-to-month,Yes,Electronic check,82.3,82.3\n9747-DDZOS,Female,0,No,No,1,Yes,No,Fiber optic,No,No,Yes,No,No,No,Month-to-month,No,Bank transfer (automatic),73.5,73.5\n6284-KMNUF,Female,0,Yes,No,56,Yes,Yes,Fiber optic,Yes,No,No,No,Yes,Yes,One year,Yes,Electronic check,98.0,5270.6\n";
+$("demo").addEventListener("click",function(){$("csv").value=DEMO;runBatch(DEMO);});
+$("run").addEventListener("click",function(){runBatch($("csv").value);});
+$("file").addEventListener("change",function(e){var f=e.target.files[0];if(!f)return;var rd=new FileReader();rd.onload=function(){$("csv").value=String(rd.result).slice(0,2000000);runBatch(String(rd.result));};rd.onerror=function(){$("out").innerHTML='<p class="err">Could not read the file.</p>';};rd.readAsText(f);e.target.value="";});
+update();
+</script></body></html>
